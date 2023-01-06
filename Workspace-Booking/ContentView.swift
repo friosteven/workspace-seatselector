@@ -14,11 +14,13 @@ struct ContentView: View {
     @State private var showSheet = false
     @State private var onTappedData: SeatModelElement?
     
+    @State private var scale: CGFloat = 1
+    
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
+        ZStack {
+            
+            GeometryReader { geo in
                 Image("floorplan").resizable().aspectRatio(contentMode: .fit)
-                
                 
                 ForEach(seatModel, id: \.id) { data in
                     setSeats(with: data).onTapGesture {
@@ -35,18 +37,21 @@ struct ContentView: View {
                         .presentationDetents([.fraction(0.2)])
                     })
                     
-//                    .modifier(ImageModifier(contentSize: CGSize(width: geo.size.width, height: geo.size.height)))
+                    //                    .modifier(ImageModifier(contentSize: CGSize(width: geo.size.width, height: geo.size.height)))
                     
                 }
+                
             }
-            .modifier(ImageModifier(contentSize: CGSize(width: geo.size.width, height: geo.size.height)))
-            .onTapGesture { location in
-                print("Tapped at \(location)")
-            }.onAppear{
-                setupSeats()
-                print("count \(seatModel.count)")
-                print("getSeatModel \(seatModel)")
-            }
+            .zoomable(scale: $scale)
+        }
+        .padding(EdgeInsets(top: 24, leading: 32, bottom: 24, trailing: 32))
+  
+        .onTapGesture { location in
+            print("Tapped at \(location)")
+        }.onAppear{
+            setupSeats()
+            print("count \(seatModel.count)")
+            print("getSeatModel \(seatModel)")
         }
     }
 }
