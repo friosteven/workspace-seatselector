@@ -7,13 +7,17 @@
 
 import SwiftUI
 import UIKit
-
+// https://medium.com/@priya_talreja/pinch-zoom-pan-image-and-double-tap-to-zoom-image-in-swiftui-878ca70c539d
 struct ImageModifier: ViewModifier {
     private var contentSize: CGSize
     private var min: CGFloat = 1.0
     private var max: CGFloat = 3.0
     @State var currentScale: CGFloat = 1.0
-
+    
+    
+    @State private var verticalOffset: CGFloat = 0.0
+    @State private var horizontalOffset: CGFloat = 0.0
+    
     init(contentSize: CGSize) {
         self.contentSize = contentSize
     }
@@ -28,11 +32,22 @@ struct ImageModifier: ViewModifier {
     }
     
     func body(content: Content) -> some View {
-        ScrollView([.horizontal, .vertical]) {
+        //        ScrollView([.horizontal, .vertical]) {
+        OffsettableScrollView { point in
+            verticalOffset = point.y
+            horizontalOffset = point.x
+            print("vertical offset: \(verticalOffset), horizontal offset: \(horizontalOffset)")
+        } content: {
             content
                 .frame(width: contentSize.width * currentScale, height: contentSize.height * currentScale, alignment: .center)
                 .modifier(PinchToZoom(minScale: min, maxScale: max, scale: $currentScale))
+        }.onAppear {
+            print("default horizontal offset \(horizontalOffset)")
+            print("default vertical offset \(verticalOffset)")
+            
         }
+        
+        //        }
         .gesture(doubleTapGesture)
         .animation(.easeInOut, value: currentScale)
     }
@@ -46,7 +61,7 @@ class PinchZoomView: UIView {
     let scaleChange: (CGFloat) -> Void
     
     init(minScale: CGFloat,
-           maxScale: CGFloat,
+         maxScale: CGFloat,
          currentScale: CGFloat,
          scaleChange: @escaping (CGFloat) -> Void) {
         self.minScale = minScale

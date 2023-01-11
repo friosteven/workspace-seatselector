@@ -17,7 +17,6 @@ struct ContentView: View {
     
     @State private var scale: CGFloat = 1
     
-   
     
     var body: some View {
         VStack {
@@ -49,15 +48,8 @@ struct ContentView: View {
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
                 .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
-                .onTapGesture {
-                    print("didTap @\($0)")
-                    print("width: \(proxy.size.width), height: \(proxy.size.height)")
-                    
-                }
-                          
             }
             ZoomOutButton()
-            
                 .onAppear{
                     setupSeats()
                     print("count \(seatModel.count)")
