@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct ContentView: View {
     
@@ -16,42 +17,52 @@ struct ContentView: View {
     
     @State private var scale: CGFloat = 1
     
+   
+    
     var body: some View {
-        ZStack {
+        VStack {
             
-            GeometryReader { geo in
-                Image("floorplan").resizable().aspectRatio(contentMode: .fit)
-                
-                ForEach(seatModel, id: \.id) { data in
-                    setSeats(with: data).onTapGesture {
-                        print("didTapped \(data)")
-                        onTappedData = data
-                        showSheet.toggle()
-                        
-                    }.sheet(isPresented: $showSheet, content: {
-                        VStack {
-                            Text("Seat ID: \(onTappedData?.seatID ?? "")")
-                            Text("Seat No: \(onTappedData?.seatNo ?? 0)")
-                            Text("Seat Status: \(onTappedData?.status.description ?? "false")")
-                        }
-                        .presentationDetents([.fraction(0.2)])
-                    })
+            GeometryReader { proxy in
+                ZStack {
                     
-                    //                    .modifier(ImageModifier(contentSize: CGSize(width: geo.size.width, height: geo.size.height)))
+                    Image("floorplan")
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(Rectangle())
+                    
+                    ForEach(seatModel, id: \.id) { data in
+                        setSeats(with: data).onTapGesture {
+                            print("didTapped \(data)")
+                            onTappedData = data
+                            showSheet.toggle()
+                        }
+                        .sheet(isPresented: $showSheet, content: {
+                            VStack {
+                                Text("Seat ID: \(onTappedData?.seatID ?? "")")
+                                Text("Seat No: \(onTappedData?.seatNo ?? 0)")
+                                Text("Seat Status: \(onTappedData?.status.description ?? "false")")
+                            }
+                            .presentationDetents([.fraction(0.2)])
+                        })
+                        
+                    }
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
+                .onTapGesture {
+                    print("didTap @\($0)")
+                    print("width: \(proxy.size.width), height: \(proxy.size.height)")
                     
                 }
-                
+                          
             }
-            .zoomable(scale: $scale)
-        }
-        .padding(EdgeInsets(top: 24, leading: 32, bottom: 24, trailing: 32))
-  
-        .onTapGesture { location in
-            print("Tapped at \(location)")
-        }.onAppear{
-            setupSeats()
-            print("count \(seatModel.count)")
-            print("getSeatModel \(seatModel)")
+            ZoomOutButton()
+            
+                .onAppear{
+                    setupSeats()
+                    print("count \(seatModel.count)")
+                    print("getSeatModel \(seatModel)")
+                }
         }
     }
 }
@@ -61,14 +72,25 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
-
 extension ContentView {
+    private func ZoomOutButton() -> Button<Text> {
+        return Button(action: {
+            print("did tapped zoom out \(scale)")
+            scale = 1
+        }, label: {
+            Text("Zoom Out")
+        })
+    }
     
     func setSeats(with seatModelElement: SeatModelElement) -> some View {
+        
+        let width = CGFloat(seatModelElement.dimensions.width)
+        let height = CGFloat(seatModelElement.dimensions.height)
+        
         return Image(getSeatImage(status: seatModelElement.status))
             .resizable()
-            .frame(width: CGFloat(seatModelElement.dimensions.width),
-                   height: CGFloat(seatModelElement.dimensions.height))
+            .frame(width: width,
+                   height: height)
             .position(x: seatModelElement.location.posX,
                       y: seatModelElement.location.posY)
     }

@@ -143,22 +143,29 @@ struct Zoomable: ViewModifier {
                                offset: $offset,
                                minScale: minScale,
                                maxScale: maxScale))
-      .gesture(TapGesture(count: 2).onEnded {
-        if scale != 1 { // reset the scale
-          scale = clamp(1, minScale, maxScale)
-          anchor = .center
-          offset = .zero
-        } else { // quick zoom
-          scale = clamp(2, minScale, maxScale)
-        }
-      })
+//      .gesture(TapGesture(count: 2).onEnded {
+//        if scale != 1 { // reset the scale
+//          scale = clamp(1, minScale, maxScale)
+//          anchor = .center
+//          offset = .zero
+//        } else { // quick zoom
+//          scale = clamp(2, minScale, maxScale)
+//        }
+//      })
   }
 }
 
 extension View {
-  func zoomable(scale: Binding<CGFloat>,
-                minScale: CGFloat = 0.5,
-                maxScale: CGFloat = 3) -> some View {
-    modifier(Zoomable(scale: scale, minScale: minScale, maxScale: maxScale))
-  }
+//  func zoomable(scale: Binding<CGFloat>,
+//                minScale: CGFloat = 1,
+//                maxScale: CGFloat = 3) -> some View {
+//    modifier(Zoomable(scale: scale, minScale: minScale, maxScale: maxScale))
+//  }
+    func zoomable(scale: Binding<CGFloat>,
+                  minScale: CGFloat = 1,
+                  maxScale: CGFloat = 3,
+                  onScaleChange: @escaping (_ scaleFactor: CGFloat?) -> ()) -> some View {
+        onScaleChange(scale.wrappedValue)
+      return modifier(Zoomable(scale: scale, minScale: minScale, maxScale: maxScale))
+    }
 }

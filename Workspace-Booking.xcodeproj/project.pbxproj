@@ -185,6 +185,8 @@
 			dependencies = (
 			);
 			name = "Workspace-Booking";
+			packageProductDependencies = (
+			);
 			productName = "Workspace-Booking";
 			productReference = B0003423295022C3007B2E9E /* Workspace-Booking.app */;
 			productType = "com.apple.product-type.application";
@@ -257,6 +259,8 @@
 				Base,
 			);
 			mainGroup = B000341A295022C3007B2E9E;
+			packageReferences = (
+			);
 			productRefGroup = B0003424295022C3007B2E9E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
