@@ -8,18 +8,24 @@
 import SwiftUI
 import UIKit
 // https://medium.com/@priya_talreja/pinch-zoom-pan-image-and-double-tap-to-zoom-image-in-swiftui-878ca70c539d
+
 struct ImageModifier: ViewModifier {
     private var contentSize: CGSize
     private var min: CGFloat = 1.0
     private var max: CGFloat = 3.0
     @State var currentScale: CGFloat = 1.0
     
+    @State var yOffset: CGFloat = 0.0
+    @State var xOffset: CGFloat = 0.0
+    var scrollViewOnAppear: ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())
+    var scrollViewOnChange: ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())
     
-    @State private var verticalOffset: CGFloat = 0.0
-    @State private var horizontalOffset: CGFloat = 0.0
-    
-    init(contentSize: CGSize) {
+    init(contentSize: CGSize,
+         scrollViewOnAppear: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ()),
+         scrollViewOnChange: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())) {
         self.contentSize = contentSize
+        self.scrollViewOnAppear = scrollViewOnAppear
+        self.scrollViewOnChange = scrollViewOnChange
     }
     
     var doubleTapGesture: some Gesture {
@@ -30,26 +36,46 @@ struct ImageModifier: ViewModifier {
             }
         }
     }
-    
     func body(content: Content) -> some View {
-        //        ScrollView([.horizontal, .vertical]) {
-        OffsettableScrollView { point in
-            verticalOffset = point.y
-            horizontalOffset = point.x
-            print("vertical offset: \(verticalOffset), horizontal offset: \(horizontalOffset)")
-        } content: {
-            content
-                .frame(width: contentSize.width * currentScale, height: contentSize.height * currentScale, alignment: .center)
-                .modifier(PinchToZoom(minScale: min, maxScale: max, scale: $currentScale))
-        }.onAppear {
-            print("default horizontal offset \(horizontalOffset)")
-            print("default vertical offset \(verticalOffset)")
-            
+        GeometryReader { geo in
+            OffsettableScrollView { point in
+                yOffset = point.y
+                xOffset = point.x
+                scrollViewOnChange(OffsettableScrollViewElements(xOffset: point.x,
+                                                                 yOffset: point.y,
+                                                                 width: geo.size.width,
+                                                                 height: geo.size.height,
+                                                                 currentScale: currentScale))
+            } content: {
+                content
+                    .frame(width: contentSize.width * currentScale, height: contentSize.height * currentScale, alignment: .center)
+                    .modifier(PinchToZoom(minScale: min, maxScale: max, scale: $currentScale))
+            }.onAppear {
+                scrollViewOnAppear(OffsettableScrollViewElements(xOffset: xOffset,
+                                                                 yOffset: yOffset,
+                                                                 width: geo.size.width,
+                                                                 height: geo.size.height,
+                                                                 currentScale: currentScale))
+            }
+            .gesture(doubleTapGesture)
+            .animation(.easeInOut, value: currentScale)
         }
+    }
+}
+
+extension View {
+    func pinchZoom(geometryProxy: GeometryProxy,
+                   scrollViewOnAppear: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ()),
+                   scrollViewOnChange: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())) -> some View {
         
-        //        }
-        .gesture(doubleTapGesture)
-        .animation(.easeInOut, value: currentScale)
+        let mod = ImageModifier(contentSize: CGSize(width: geometryProxy.size.width,
+                                                    height: geometryProxy.size.height),
+                                scrollViewOnAppear: {
+            scrollViewOnAppear($0)
+        }, scrollViewOnChange: {
+            scrollViewOnChange($0)
+        })
+        return modifier(mod)
     }
 }
 
@@ -111,7 +137,6 @@ struct PinchZoom: UIViewRepresentable {
         let pinchZoomView = PinchZoomView(minScale: minScale, maxScale: maxScale, currentScale: scale, scaleChange: { scale = $0 })
         return pinchZoomView
     }
-    
     func updateUIView(_ pageControl: PinchZoomView, context: Context) { }
 }
 

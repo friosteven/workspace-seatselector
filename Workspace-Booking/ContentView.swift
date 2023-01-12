@@ -43,11 +43,18 @@ struct ContentView: View {
                             }
                             .presentationDetents([.fraction(0.2)])
                         })
-                        
                     }
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
-                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
+                .pinchZoom(geometryProxy: proxy,
+                           scrollViewOnAppear: {
+                    
+                    print("onAppear: xOffset: \($0.xOffset), yOffset: \($0.yOffset), width: \($0.width), height: \($0.height), scale: \($0.currentScale)")
+                    
+                }, scrollViewOnChange: {
+                    print("onChange: xOffset: \($0.xOffset), yOffset: \($0.yOffset), width: \($0.width), height: \($0.height), scale: \($0.currentScale)")
+                })
+                //                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
             }
             ZoomOutButton()
                 .onAppear{

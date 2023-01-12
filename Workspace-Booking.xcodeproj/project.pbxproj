@@ -21,6 +21,7 @@
 		B000345C2965401B007B2E9E /* PinchZoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000345B2965401A007B2E9E /* PinchZoom.swift */; };
 		B000345E2966CC64007B2E9E /* ZoomableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000345D2966CC64007B2E9E /* ZoomableView.swift */; };
 		B000346E296E6464007B2E9E /* OffsetPreferenceKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000346D296E6464007B2E9E /* OffsetPreferenceKey.swift */; };
+		B0003470296FBD32007B2E9E /* OffsettableScrollViewElements.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000346F296FBD32007B2E9E /* OffsettableScrollViewElements.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,7 @@
 		B000345B2965401A007B2E9E /* PinchZoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinchZoom.swift; sourceTree = "<group>"; };
 		B000345D2966CC64007B2E9E /* ZoomableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableView.swift; sourceTree = "<group>"; };
 		B000346D296E6464007B2E9E /* OffsetPreferenceKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetPreferenceKey.swift; sourceTree = "<group>"; };
+		B000346F296FBD32007B2E9E /* OffsettableScrollViewElements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsettableScrollViewElements.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +170,7 @@
 				B000345B2965401A007B2E9E /* PinchZoom.swift */,
 				B000345D2966CC64007B2E9E /* ZoomableView.swift */,
 				B000346D296E6464007B2E9E /* OffsetPreferenceKey.swift */,
+				B000346F296FBD32007B2E9E /* OffsettableScrollViewElements.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -312,6 +315,7 @@
 				B000345E2966CC64007B2E9E /* ZoomableView.swift in Sources */,
 				B0003459295181F6007B2E9E /* JSONHelper.swift in Sources */,
 				B000345429504A53007B2E9E /* SeatModel.swift in Sources */,
+				B0003470296FBD32007B2E9E /* OffsettableScrollViewElements.swift in Sources */,
 				B0003429295022C3007B2E9E /* ContentView.swift in Sources */,
 				B000346E296E6464007B2E9E /* OffsetPreferenceKey.swift in Sources */,
 				B0003427295022C3007B2E9E /* Workspace_BookingApp.swift in Sources */,
