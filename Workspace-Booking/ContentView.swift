@@ -16,12 +16,13 @@ struct ContentView: View {
     @State private var onTappedData: SeatModelElement?
     
     @State private var scale: CGFloat = 1
+    @StateObject var offsettable = OffsettableScrollViewElements()
     
     
     var body: some View {
         VStack {
             
-            GeometryReader { proxy in
+            GeometryReader { geo in
                 ZStack {
                     
                     Image("floorplan")
@@ -45,15 +46,20 @@ struct ContentView: View {
                         })
                     }
                 }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .pinchZoom(geometryProxy: proxy,
-                           scrollViewOnAppear: {
+                .frame(width: geo.size.width, height: geo.size.height)
+                .pinchZoom(geometryProxy: geo,
+                           offsettable: offsettable, scrollViewOnAppear: {
+                    print("onAppear: xOffset: \(offsettable.xOffset), yOffset: \(offsettable.yOffset), width: \(offsettable.width), height: \(offsettable.height), scale: \(offsettable.currentScale)")
+
+                },
+                           scrollViewOnChange: {
+                    print("onChange: xOffset: \(offsettable.xOffset), yOffset: \(offsettable.yOffset), width: \(offsettable.width), height: \(offsettable.height), scale: \(offsettable.currentScale)")
                     
-                    print("onAppear: xOffset: \($0.xOffset), yOffset: \($0.yOffset), width: \($0.width), height: \($0.height), scale: \($0.currentScale)")
-                    
-                }, scrollViewOnChange: {
-                    print("onChange: xOffset: \($0.xOffset), yOffset: \($0.yOffset), width: \($0.width), height: \($0.height), scale: \($0.currentScale)")
                 })
+                .onTapGesture { location in
+                    
+                    print("didTap @location: \(location)")
+                }
                 //                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
             }
             ZoomOutButton()

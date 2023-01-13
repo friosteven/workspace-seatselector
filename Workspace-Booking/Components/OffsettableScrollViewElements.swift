@@ -7,10 +7,10 @@
 
 import Foundation
 
-struct OffsettableScrollViewElements {
-    var xOffset: CGFloat
-    var yOffset: CGFloat
-    var width: CGFloat
-    var height: CGFloat
-    var currentScale: CGFloat?
+class OffsettableScrollViewElements: ObservableObject {
+    @Published var xOffset: CGFloat = 0.0
+    @Published var yOffset: CGFloat = 0.0
+    @Published var width: CGFloat = 0.0
+    @Published var height: CGFloat = 0.0
+    @Published var currentScale: CGFloat?  = 0.0
 }

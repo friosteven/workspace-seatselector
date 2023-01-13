@@ -17,13 +17,20 @@ struct ImageModifier: ViewModifier {
     
     @State var yOffset: CGFloat = 0.0
     @State var xOffset: CGFloat = 0.0
-    var scrollViewOnAppear: ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())
-    var scrollViewOnChange: ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())
+//    var scrollViewOnAppear: ((_ offsettableScrollViewElements: StateObject<OffsettableScrollViewElements>) -> ())
+//    var scrollViewOnChange: ((_ offsettableScrollViewElements: StateObject<OffsettableScrollViewElements>) -> ())
+    
+    @ObservedObject var offsettable: OffsettableScrollViewElements
+    
+    var scrollViewOnAppear: (() -> ())?
+    var scrollViewOnChange: (() -> ())?
     
     init(contentSize: CGSize,
-         scrollViewOnAppear: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ()),
-         scrollViewOnChange: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())) {
+         offsettable: OffsettableScrollViewElements,
+         scrollViewOnAppear: (() -> ())?,
+         scrollViewOnChange: (() -> ())?) {
         self.contentSize = contentSize
+        self.offsettable = offsettable
         self.scrollViewOnAppear = scrollViewOnAppear
         self.scrollViewOnChange = scrollViewOnChange
     }
@@ -41,39 +48,43 @@ struct ImageModifier: ViewModifier {
             OffsettableScrollView { point in
                 yOffset = point.y
                 xOffset = point.x
-                scrollViewOnChange(OffsettableScrollViewElements(xOffset: point.x,
-                                                                 yOffset: point.y,
-                                                                 width: geo.size.width,
-                                                                 height: geo.size.height,
-                                                                 currentScale: currentScale))
+                
+                setOffsettableElementsValue(geo)
+                scrollViewOnChange?()
             } content: {
                 content
                     .frame(width: contentSize.width * currentScale, height: contentSize.height * currentScale, alignment: .center)
                     .modifier(PinchToZoom(minScale: min, maxScale: max, scale: $currentScale))
             }.onAppear {
-                scrollViewOnAppear(OffsettableScrollViewElements(xOffset: xOffset,
-                                                                 yOffset: yOffset,
-                                                                 width: geo.size.width,
-                                                                 height: geo.size.height,
-                                                                 currentScale: currentScale))
+                setOffsettableElementsValue(geo)
+                scrollViewOnAppear?()
             }
             .gesture(doubleTapGesture)
             .animation(.easeInOut, value: currentScale)
         }
     }
+    private func setOffsettableElementsValue(_ geo: GeometryProxy) {
+        offsettable.xOffset = xOffset
+        offsettable.yOffset = yOffset
+        offsettable.width = geo.size.width
+        offsettable.height = geo.size.height
+        offsettable.currentScale = currentScale
+    }
 }
 
 extension View {
     func pinchZoom(geometryProxy: GeometryProxy,
-                   scrollViewOnAppear: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ()),
-                   scrollViewOnChange: @escaping ((_ offsettableScrollViewElements: OffsettableScrollViewElements) -> ())) -> some View {
+                   offsettable: OffsettableScrollViewElements,
+                   scrollViewOnAppear: (() -> ())?,
+                   scrollViewOnChange: (() -> ())?) -> some View {
         
         let mod = ImageModifier(contentSize: CGSize(width: geometryProxy.size.width,
-                                                    height: geometryProxy.size.height),
+                                                    height: geometryProxy.size.height), offsettable: offsettable,
                                 scrollViewOnAppear: {
-            scrollViewOnAppear($0)
-        }, scrollViewOnChange: {
-            scrollViewOnChange($0)
+            scrollViewOnAppear?()
+        },
+                                scrollViewOnChange: {
+            scrollViewOnChange?()
         })
         return modifier(mod)
     }
