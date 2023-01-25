@@ -13,54 +13,41 @@ struct ContentView: View {
     @State private var seatModel: SeatModel = .init()
     @State private var seatModelElement: SeatModelElement?
     @State private var showSheet = false
-    @State private var onTappedData: SeatModelElement?
-    
-    @State private var scale: CGFloat = 1
-    @StateObject var offsettable = OffsettableScrollViewElements()
-    
+    @State var onTappedData: SeatModelElement
+    @State private var contentSize = CGSize.zero
+    @State private var min: CGFloat = 1.0
+    @State private var max: CGFloat = 1.5
+    @State private var currentScale: CGFloat = 1.0
     
     var body: some View {
         VStack {
             
-            GeometryReader { geo in
+            GeometryReader { proxy in
                 ZStack {
                     
-                    Image("floorplan")
+                    Image("img_seat_view")
                         .resizable()
                         .scaledToFit()
                         .clipShape(Rectangle())
-                    
-                    ForEach(seatModel, id: \.id) { data in
-                        setSeats(with: data).onTapGesture {
-                            print("didTapped \(data)")
-                            onTappedData = data
-                            showSheet.toggle()
-                        }
-                        .sheet(isPresented: $showSheet, content: {
-                            VStack {
-                                Text("Seat ID: \(onTappedData?.seatID ?? "")")
-                                Text("Seat No: \(onTappedData?.seatNo ?? 0)")
-                                Text("Seat Status: \(onTappedData?.status.description ?? "false")")
+                        .overlay(
+                            GeometryReader { geo in
+                                Color.clear.onAppear {
+                                    contentSize = geo.size
+                                    
+                                }
                             }
-                            .presentationDetents([.fraction(0.2)])
-                        })
+                        )
+                }
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .sheet(isPresented: $showSheet, content: {
+                    VStack {
+                        Text("Seat ID: \(onTappedData.seatID )")
+                        Text("Seat No: \(onTappedData.seatNo )")
+                        Text("Seat Status: \(onTappedData.status ? "Available" : "Not available" )")
                     }
-                }
-                .frame(width: geo.size.width, height: geo.size.height)
-                .pinchZoom(geometryProxy: geo,
-                           offsettable: offsettable, scrollViewOnAppear: {
-                    print("onAppear: xOffset: \(offsettable.xOffset), yOffset: \(offsettable.yOffset), width: \(offsettable.width), height: \(offsettable.height), scale: \(offsettable.currentScale)")
-
-                },
-                           scrollViewOnChange: {
-                    print("onChange: xOffset: \(offsettable.xOffset), yOffset: \(offsettable.yOffset), width: \(offsettable.width), height: \(offsettable.height), scale: \(offsettable.currentScale)")
-                    
+                    .presentationDetents([.fraction(0.2)])
                 })
-                .onTapGesture { location in
-                    
-                    print("didTap @location: \(location)")
-                }
-                //                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height)))
+                .modifier(ImageModifier(contentSize: CGSize(width: proxy.size.width, height: proxy.size.height), currentScale: $currentScale, seatModel: $seatModel, onTappedData: $onTappedData, showSheet: $showSheet))
             }
             ZoomOutButton()
                 .onAppear{
@@ -72,37 +59,35 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
 extension ContentView {
     private func ZoomOutButton() -> Button<Text> {
         return Button(action: {
-            print("did tapped zoom out \(scale)")
-            scale = 1
+            currentScale = 1
         }, label: {
             Text("Zoom Out")
         })
     }
-    
-    func setSeats(with seatModelElement: SeatModelElement) -> some View {
-        
-        let width = CGFloat(seatModelElement.dimensions.width)
-        let height = CGFloat(seatModelElement.dimensions.height)
-        
-        return Image(getSeatImage(status: seatModelElement.status))
-            .resizable()
-            .frame(width: width,
-                   height: height)
-            .position(x: seatModelElement.location.posX,
-                      y: seatModelElement.location.posY)
-    }
-    func getSeatImage(status: Bool) -> String {
-        return status ? "seat-unselected" : "seat-selected"
-    }
 }
+
+//struct SeatView: View {
+//    var width = 0
+//    var height = 0
+//    var posX = 0
+//    var posY = 0
+//    // Here, there is one boolTest for each element
+//    @State private var boolTest = false
+//    let text: String
+//
+//    var body: some View {
+//                Text(text)
+//                    .font(.system(size: 70))
+//                    .foregroundColor(boolTest ? .red : .green)
+//                    .onTapGesture {
+//                        boolTest.toggle()
+//                    }
+//    }
+//}
+
 extension ContentView {
     func getSeatModel() -> SeatModel {
         let data = JSONHelper.load(resource: "SeatJSON", response: SeatModel.self)
@@ -111,18 +96,19 @@ extension ContentView {
             let seatID = $0.seatID
             let seatNo = $0.seatNo
             let status = $0.status
-            let location = $0.location
-            let posX = location.posX
-            let posY = location.posY
-            let dimension = $0.dimensions
-            let width = dimension.width
-            let height = dimension.height
+            let posX = $0.x
+            let posY = $0.y
+            
+            let width = $0.width
+            let height = $0.height
             let seatModelElement = SeatModelElement(seatID: seatID,
                                                     seatNo: seatNo,
                                                     status: status,
-                                                    location: Location.init(posX: posX,
-                                                                            posY: posY),
-                                                    dimensions: Dimensions.init(width: width, height: height))
+                                                    width: width,
+                                                    height: height,
+                                                    x: posX,
+                                                    y: posY)
+            
             seatModel.append(seatModelElement)
         }
         return seatModel
@@ -133,19 +119,19 @@ extension ContentView {
             let seatID = $0.seatID
             let seatNo = $0.seatNo
             let status = $0.status
-            let location = $0.location
-            let posX = location.posX
-            let posY = location.posY
-            let dimensions = $0.dimensions
-            let height = dimensions.height
-            let width = dimensions.width
+            let posX = $0.x
+            let posY = $0.y
+            
+            let width = $0.width
+            let height = $0.height
             
             seatModelElement = SeatModelElement(seatID: seatID,
-                                                seatNo: seatNo,
-                                                status: status,
-                                                location: Location.init(posX: posX,
-                                                                        posY: posY),
-                                                dimensions: Dimensions.init(width: width, height: height))
+                                                    seatNo: seatNo,
+                                                    status: status,
+                                                    width: width,
+                                                    height: height,
+                                                    x: posX,
+                                                    y: posY)
         }
     }
 }

@@ -13,24 +13,13 @@ struct SeatModelElement: Codable, Hashable {
     let seatID: String
     let seatNo: Int
     let status: Bool
-    let location: Location
-    let dimensions: Dimensions
+    let width, height, x,y: Float
 
     enum CodingKeys: String, CodingKey {
         case seatID = "seat_id"
         case seatNo = "seat_no"
-        case status, location, dimensions
+        case status, width, height, x, y
     }
-}
-
-// MARK: - Dimensions
-struct Dimensions: Codable, Hashable {
-    let width, height: Int
-}
-
-// MARK: - Location
-struct Location: Codable, Hashable {
-    let posX, posY: Double
 }
 
 typealias SeatModel = [SeatModelElement]

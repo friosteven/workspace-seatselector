@@ -8,85 +8,100 @@
 import SwiftUI
 import UIKit
 // https://medium.com/@priya_talreja/pinch-zoom-pan-image-and-double-tap-to-zoom-image-in-swiftui-878ca70c539d
-
 struct ImageModifier: ViewModifier {
-    private var contentSize: CGSize
-    private var min: CGFloat = 1.0
-    private var max: CGFloat = 3.0
-    @State var currentScale: CGFloat = 1.0
+    var contentSize: CGSize
+    var min: CGFloat = 1.0
+    var max: CGFloat = 1.5
+    @Binding var currentScale: CGFloat
+    @Binding var seatModel: SeatModel
+    @Binding var onTappedData: SeatModelElement
+    @Binding var showSheet: Bool
     
-    @State var yOffset: CGFloat = 0.0
-    @State var xOffset: CGFloat = 0.0
-//    var scrollViewOnAppear: ((_ offsettableScrollViewElements: StateObject<OffsettableScrollViewElements>) -> ())
-//    var scrollViewOnChange: ((_ offsettableScrollViewElements: StateObject<OffsettableScrollViewElements>) -> ())
+    @State private var verticalOffset: CGFloat = 0.0
+    @State private var horizontalOffset: CGFloat = 0.0
     
-    @ObservedObject var offsettable: OffsettableScrollViewElements
+//    @State private var currentScrollViewHeight: CGFloat = 0.0
+//    @State private var currentScrollViewWidth: CGFloat = 0.0
     
-    var scrollViewOnAppear: (() -> ())?
-    var scrollViewOnChange: (() -> ())?
-    
-    init(contentSize: CGSize,
-         offsettable: OffsettableScrollViewElements,
-         scrollViewOnAppear: (() -> ())?,
-         scrollViewOnChange: (() -> ())?) {
-        self.contentSize = contentSize
-        self.offsettable = offsettable
-        self.scrollViewOnAppear = scrollViewOnAppear
-        self.scrollViewOnChange = scrollViewOnChange
-    }
-    
-    var doubleTapGesture: some Gesture {
-        TapGesture(count: 2).onEnded {
-            if currentScale <= min { currentScale = max } else
-            if currentScale >= max { currentScale = min } else {
-                currentScale = ((max - min) * 0.5 + min) < currentScale ? max : min
-            }
+    private func tapGesture() {
+        print("Double tapped!")
+        if currentScale <= min { currentScale = max } else
+        if currentScale >= max { currentScale = min } else {
+            currentScale = ((max - min) * 0.5 + min) < currentScale ? max : min
         }
     }
     func body(content: Content) -> some View {
-        GeometryReader { geo in
-            OffsettableScrollView { point in
-                yOffset = point.y
-                xOffset = point.x
-                
-                setOffsettableElementsValue(geo)
-                scrollViewOnChange?()
-            } content: {
-                content
-                    .frame(width: contentSize.width * currentScale, height: contentSize.height * currentScale, alignment: .center)
-                    .modifier(PinchToZoom(minScale: min, maxScale: max, scale: $currentScale))
-            }.onAppear {
-                setOffsettableElementsValue(geo)
-                scrollViewOnAppear?()
-            }
-            .gesture(doubleTapGesture)
-            .animation(.easeInOut, value: currentScale)
-        }
-    }
-    private func setOffsettableElementsValue(_ geo: GeometryProxy) {
-        offsettable.xOffset = xOffset
-        offsettable.yOffset = yOffset
-        offsettable.width = geo.size.width
-        offsettable.height = geo.size.height
-        offsettable.currentScale = currentScale
-    }
-}
-
-extension View {
-    func pinchZoom(geometryProxy: GeometryProxy,
-                   offsettable: OffsettableScrollViewElements,
-                   scrollViewOnAppear: (() -> ())?,
-                   scrollViewOnChange: (() -> ())?) -> some View {
         
-        let mod = ImageModifier(contentSize: CGSize(width: geometryProxy.size.width,
-                                                    height: geometryProxy.size.height), offsettable: offsettable,
-                                scrollViewOnAppear: {
-            scrollViewOnAppear?()
-        },
-                                scrollViewOnChange: {
-            scrollViewOnChange?()
-        })
-        return modifier(mod)
+        ScrollView([.horizontal, .vertical]) {
+            
+            
+            
+            content
+                .frame(width: contentSize.width * currentScale,
+                       height: contentSize.height * currentScale,
+                       alignment: .center)
+                .modifier(PinchToZoom(minScale: min,
+                                      maxScale: max,
+                                      scale: $currentScale))
+                .overlay(ForEach(seatModel, id: \.id) { data in
+                    setSeats(with: data)
+                        .highPriorityGesture(TapGesture()
+                            .onEnded {
+                                print("TapGesture didTapped \(data)")
+                                onTappedData = data
+                                showSheet.toggle()
+                            }
+                        )
+                    //                                .animation(.easeInOut, value: currentScale)
+                })
+//                .background(GeometryReader { reader in
+//                    Color.clear.onChange(of: currentScale) { _ in
+//                        currentScrollViewHeight = reader.size.height
+//                        currentScrollViewWidth = reader.size.width
+//                    }
+//                    Color.clear.onAppear(perform: {
+//                        currentScrollViewHeight = reader.size.height
+//                        currentScrollViewWidth = reader.size.width
+//                    })
+//                })
+            
+        }
+        .onTapGesture(count: 2) {
+            tapGesture()
+        }
+        //        .animation(.easeIn, value: currentScale)
+    }
+    
+    func setSeats(with seatModelElement: SeatModelElement) -> some View {
+        
+        let contentHeight = ((contentSize.height) * currentScale).rounded(.toNearestOrAwayFromZero)
+        let contentWidth = (contentSize.width * currentScale).rounded(.toNearestOrAwayFromZero)
+        
+        let width = ((CGFloat(seatModelElement.width) * contentWidth)).rounded(.toNearestOrAwayFromZero)
+        let height = ((CGFloat(seatModelElement.height) * contentHeight)).rounded(.toNearestOrAwayFromZero)
+        
+        let horizontalPosition = ((CGFloat(seatModelElement.x) * contentWidth)).rounded(.toNearestOrAwayFromZero)
+        let verticalPosition = ((CGFloat(seatModelElement.y) * contentHeight)).rounded(.toNearestOrAwayFromZero)
+        
+        
+        
+        print("x: \(horizontalPosition), y: \(verticalPosition), width: \(width), height: \(height), svWidth: \(contentWidth)), svHeight: \(contentHeight),  currentScale: \(currentScale) ")
+        
+        return
+        //        Image(getSeatImage(status: seatModelElement.status))
+        //            .resizable()
+        Rectangle()
+            .fill(getSeatColor(status: seatModelElement.status))
+            .frame(width: width,
+                   height: height)
+            .position(x: horizontalPosition,
+                      y: verticalPosition).opacity(0.5)
+    }
+    func getSeatColor(status: Bool) -> Color {
+        return status ? .blue : .red
+    }
+    func getSeatImage(status: Bool) -> String {
+        return status ? "seat-unselected" : "seat-selected"
     }
 }
 
@@ -148,6 +163,7 @@ struct PinchZoom: UIViewRepresentable {
         let pinchZoomView = PinchZoomView(minScale: minScale, maxScale: maxScale, currentScale: scale, scaleChange: { scale = $0 })
         return pinchZoomView
     }
+    
     func updateUIView(_ pageControl: PinchZoomView, context: Context) { }
 }
 
